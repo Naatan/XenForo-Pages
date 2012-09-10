@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<addon addon_id="Pages" title="Pages" version_string="0.1 Beta" version_id="1" url="" install_callback_class="" install_callback_method="" uninstall_callback_class="" uninstall_callback_method="">
+  <admin_navigation>
+    <navigation navigation_id="pages" parent_navigation_id="applications" display_order="15" link="pages" admin_permission_id="pagesManage" debug_only="0" hide_no_children="0"/>
+    <navigation navigation_id="pagesAdd" parent_navigation_id="pages" display_order="10" link="pages/add" admin_permission_id="pagesManage" debug_only="0" hide_no_children="0"/>
+  </admin_navigation>
+  <admin_permissions>
+    <admin_permission admin_permission_id="pagesManage" display_order="5000"/>
+  </admin_permissions>
+  <admin_style_properties/>
+  <admin_templates>
+    <template title="pages_page_edit"><![CDATA[<xen:require css="pages_page_edit.css" />
+<xen:require js="js/pages/pages.js" />
+<xen:require js="js/pages/tiny_mce/jquery.tinymce.js" />
+
+<xen:title>{xen:if {$page.node_id}, '{xen:phrase edit_page}: {$page.title}', '{xen:phrase create_new_page}'}</xen:title>
+
+<xen:if is="{$page.node_id}">
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:adminlink nodes}#{xen:helper listitemid, $page.node_id}">{$page.title}</xen:breadcrumb>
+	</xen:navigation>
+	
+	<xen:topctrl>
+		<a href="{xen:adminlink 'nodes/add', '', 'parent_node_id={$page.node_id}'}" class="button">+ {xen:phrase add_child}</a>
+		<a href="{xen:adminlink 'nodes/add', '', 'parent_node_id={$page.parent_node_id}'}" class="button">+ {xen:phrase add_sibling}</a>
+	</xen:topctrl>
+</xen:if>
+
+<xen:form action="{xen:adminlink 'pages/save', $page}"
+	class="AutoValidator"
+	data-fieldValidatorUrl="{xen:adminlink 'pages/validate-field', $page}"
+	data-redirect="yes">
+
+	<ul class="tabs Tabs" data-panes="#pagePanes > li">
+		<xen:hook name="admin_page_edit_tabs">
+		<li class="active"><a>{xen:phrase basic_information}</a></li>
+		<!-- slot: after_basic_information -->
+		<li><a>{xen:phrase advanced_options} ({xen:phrase optional})</a></li>
+		</xen:hook>
+	</ul>
+
+	<ul id="pagePanes">
+		<xen:hook name="admin_page_edit_panes">
+		<li>
+			<xen:hook name="admin_page_edit_basic_information">
+			
+			<xen:textboxunit name="node_name" value="{$page.node_name}" label="{xen:phrase url_portion}:" />
+				
+			<!-- slot: after_node_name -->
+				
+			<xen:foreach loop="$languages" key="$_languageId" value="$_language">
+				
+				<fieldset class="languageSpecific start language_{$_languageId}" style="{xen:if '{$_languageId}!={$defaultLanguageId}', 'display: none'}">
+					
+					<div class="topChoosers">
+						<div class="Popup">
+							<span class="muted">{xen:phrase language}:</span> <a rel="Menu">{$_language.title}</a>
+							<div class="Menu chooseLanguage">
+								<div class="primaryContent menuHeader"><h3>{xen:phrase languages}</h3></div>
+								<ul class="secondaryContent blockLinksList">
+									<xen:foreach loop="$languages" key="$__languageId" value="$__language">
+										<li><a href="{xen:adminlink 'pages/{xen:if $page.node_id, 'edit', 'add'}', '', 'language_id={$__language.language_id}'}" data-language="{$__language.language_id}"><span class="_depth{$__language.depth}">{$__language.title}</span></a></li>
+									</xen:foreach>
+								</ul>
+							</div>
+						</div>
+					</div>
+				
+					<xen:textboxunit name="title[{$_languageId}]" value="{$phrases.title.{$_languageId}.phrase_text}" label="{xen:phrase title}:" data-liveTitleTemplate="{xen:if {$page.node_id},
+						'{xen:phrase edit_page}: <em>%s</em>',
+						'{xen:phrase create_new_page}: <em>%s</em>'}">
+					</xen:textboxunit>
+					
+					<!-- slot: after_title -->
+			
+					<xen:textboxunit name="description[{$_languageId}]" value="{$phrases.description.{$_languageId}.phrase_text}" label="{xen:phrase description}:" hint="{xen:phrase you_may_use_html}" explain="{xen:phrase node_description_explain}" rows="2" inputclass="Elastic">
+					</xen:textboxunit>
+					
+					<!-- slot: after_description -->
+						
+					<textarea name="content[{$_languageId}]" rows="20" class="textCtrl Elastic OptOut pageContentEditor">{$phrases.content.{$_languageId}.phrase_text}</textarea>
+					
+				</fieldset>
+					
+			</xen:foreach>
+			
+			</xen:hook>
+		</li>
+		<li>
+			<xen:hook name="admin_page_edit_advanced_options">
+			
+			<fieldset>
+				<!-- slot: before_parent_node_id -->
+				
+				<xen:selectunit name="parent_node_id" value="{$page.parent_node_id}" label="{xen:phrase parent_node}:">
+					<xen:options source="$nodeParentOptions" />
+				</xen:selectunit>
+				
+				<!-- slot: after_parent_node_id -->
+				
+				<xen:textboxunit name="display_order" value="{$page.display_order}" label="{xen:phrase display_order}:">
+					<xen:explain>{xen:phrase position_of_this_item_relative_to_other_nodes_with_same_parent}</xen:explain>
+				</xen:textboxunit>
+				
+				<!-- slot: after_display_order -->
+				
+				<xen:checkboxunit label="">
+					<xen:option name="display_in_list" label="{xen:phrase display_in_node_list}" selected="{$page.display_in_list}">
+						<xen:hint>{xen:phrase if_unselected_users_will_not_see_this_node_in_list}</xen:hint>
+					</xen:option>
+				</xen:checkboxunit>
+				
+				<!-- slot: after_display_in_list -->
+			</fieldset>
+			
+			<!-- slot: before_style_override -->
+			
+			<xen:checkboxunit label="{xen:phrase style}:">
+				<xen:option name="style_override" label="{xen:phrase override_user_style_choice}" selected="{$page.style_id}">
+					<xen:disabled>
+						<xen:select name="style_id" value="{$page.style_id}">
+							<xen:options source="$styleOptions" />
+						</xen:select>
+					</xen:disabled>
+				</xen:option>
+				<xen:explain>{xen:phrase if_specified_all_visitors_view_using_selected_style}</xen:explain>
+			</xen:checkboxunit>
+				
+			<fieldset>
+				<!-- slot: before_options -->
+				
+				<xen:checkboxunit label="{xen:phrase optional_components}:" class="surplusLabel">
+					<xen:option name="log_visits" label="{xen:phrase log_and_count_visits_to_this_page}" selected="{$page.log_visits}" />
+					
+					<xen:option name="list_siblings" label="{xen:phrase list_sibling_nodes}" selected="{$page.list_siblings}" />
+					
+					<xen:option name="list_children" label="{xen:phrase list_child_nodes}" selected="{$page.list_children}" />
+				</xen:checkboxunit>
+				
+				<!-- slot: after_options -->
+			</fieldset>
+				
+			<xen:hook name="admin_page_edit_php_callback">
+			
+			<xen:require css="code_event.css" />
+			<xen:controlunit label="{xen:phrase php_callback}:">
+				<xen:textbox placeholder="{xen:phrase class}" name="callback_class" value="{$page.callback_class}" size="25" maxlength="75" />
+				::
+				<xen:textbox placeholder="{xen:phrase method}" name="callback_method" value="{$page.callback_method}" size="25" maxlength="75" />
+				<div class="eventDescription baseHtml">{xen:phrase page_callback_explanation_html}</div>
+			</xen:controlunit>
+			
+			</xen:hook>
+			
+			</xen:hook>
+		</li>
+		</xen:hook>
+	</ul>
+
+	<input type="hidden" name="template_id" value="{$template.template_id}" />
+	<input type="hidden" name="node_type_id" value="Page" />
+
+	<xen:submitunit save="{xen:phrase save_page}">
+		<xen:if is="{$page.node_id}">
+			<input type="button" value="{xen:phrase delete_page}..." accesskey="d" class="button OverlayTrigger"
+				data-href="{xen:adminlink pages/delete-confirm, $page}" />
+		</xen:if>
+	</xen:submitunit>
+
+</xen:form>]]></template>
+    <template title="pages_page_edit.css"><![CDATA[fieldset.languageSpecific
+{
+	{xen:property secondaryContent}	
+	border-bottom: 0;
+	padding-left: 0;
+	padding-right: 0;
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+.pageContentEditor
+{
+	width: 98%;	
+}
+
+.mceLayout
+{
+	margin: 10px !important;
+}
+
+.topChoosers > .Popup
+{
+	margin-left: {xen:calc '{xen:property ctrlUnitLabelWidth} - {xen:property ctrlUnitLabel.padding-left}'}px;
+}]]></template>
+  </admin_templates>
+  <code_events/>
+  <code_event_listeners>
+    <listener event_id="load_class_controller" execute_order="10" callback_class="Pages_Listen" callback_method="load_class_controller" active="1" description=""/>
+    <listener event_id="load_class_model" execute_order="10" callback_class="Pages_Listen" callback_method="load_class_model" active="1" description=""/>
+    <listener event_id="load_class_view" execute_order="10" callback_class="Pages_Listen" callback_method="load_class_view" active="1" description=""/>
+  </code_event_listeners>
+  <cron/>
+  <email_templates/>
+  <optiongroups/>
+  <permissions>
+    <permission_groups>
+      <permission_group permission_group_id="pages"/>
+    </permission_groups>
+    <permissions>
+      <permission permission_group_id="pages" permission_id="pagesEdit" permission_type="flag" depend_permission_id="pagesManage" default_value="unset" interface_group_id="pages" display_order="30"/>
+      <permission permission_group_id="pages" permission_id="pagesManage" permission_type="flag" default_value="unset" interface_group_id="pages" display_order="20"/>
+      <permission permission_group_id="pages" permission_id="pagesView" permission_type="flag" default_value="unset" interface_group_id="pages" display_order="10"/>
+    </permissions>
+    <interface_groups>
+      <interface_group interface_group_id="pages" display_order="5000"/>
+    </interface_groups>
+  </permissions>
+  <phrases>
+    <phrase title="admin_navigation_pages" version_id="0" version_string=""><![CDATA[Pages]]></phrase>
+    <phrase title="admin_navigation_pagesAdd" version_id="0" version_string=""><![CDATA[Create New Page]]></phrase>
+    <phrase title="admin_permission_pagesManage" version_id="0" version_string=""><![CDATA[Manage Pages]]></phrase>
+    <phrase title="permission_group_pages" version_id="0" version_string=""><![CDATA[Pages]]></phrase>
+    <phrase title="permission_interface_pages" version_id="0" version_string=""><![CDATA[Pages]]></phrase>
+    <phrase title="permission_pages_pagesEdit" version_id="0" version_string=""><![CDATA[Add / Edit Pages]]></phrase>
+    <phrase title="permission_pages_pagesManage" version_id="0" version_string=""><![CDATA[Manage Pages]]></phrase>
+    <phrase title="permission_pages_pagesView" version_id="0" version_string=""><![CDATA[View Pages]]></phrase>
+  </phrases>
+  <route_prefixes/>
+  <style_properties/>
+  <templates/>
+  <bb_code_media_sites/>
+  <template_modifications/>
+</addon>
