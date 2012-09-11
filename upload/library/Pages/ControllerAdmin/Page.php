@@ -22,6 +22,8 @@ class Pages_ControllerAdmin_Page extends XFCP_Pages_ControllerAdmin_Page
 
 	public function actionEdit()
 	{
+		$languageModel 	= $this->_getLanguageModel();
+		
 		if ($nodeId = $this->_input->filterSingle('node_id', XenForo_Input::UINT))
 		{
 			
@@ -42,11 +44,30 @@ class Pages_ControllerAdmin_Page extends XFCP_Pages_ControllerAdmin_Page
 				'content'		=> $phraseModel->getPhrasesByTitle('page_content_' . $nodeId)
 			);
 			
-			$template = $this->_getTemplateModel()->getTemplateInStyleByTitle($pageModel->getTemplateTitle($page));
+			$templateTitle 	= $pageModel->getTemplateTitle($page);
+			$titles 		= array($templateTitle);
 			
-			if ( ! $template)
+			$languages = $languageModel->getAllLanguages();
+			foreach ($languages AS $language)
 			{
-				$template = array('template' => '');
+				$titles[] = '_page_node.' . $nodeId . '.' . $language['language_id'];
+			}
+			
+			$_templates = $this->_getTemplateModel()->getTemplatesInStyleByTitles($titles);
+			$template  = isset($_templates[$templateTitle]) ? $_templates[$templateTitle] : array();
+			
+			$templates = array();
+			
+			foreach ($languages AS $language)
+			{
+				$title = '_page_node.' . $nodeId . '.' . $language['language_id'];
+				
+				if ( ! isset($_templates[$title]))
+				{
+					continue;
+				}
+				
+				$templates[$language['language_id']] = $_templates[$title];
 			}
 		}
 		else
@@ -59,12 +80,12 @@ class Pages_ControllerAdmin_Page extends XFCP_Pages_ControllerAdmin_Page
 			
 			$phrases = array('title' => array(), 'description' => array(), 'content' => array());
 			
-			$template = array('template' => '');
+			$template  = array();
+			$templates = array();
 		}
 		
 		$options 		= XenForo_Application::get('options');
 		$languageId 	= $this->_input->filterSingle('language_id', XenForo_Input::UINT);
-		$languageModel 	= $this->_getLanguageModel();
 		$nodeModel 		= $this->_getNodeModel();
 		
 		if ( ! $languageId)
@@ -74,7 +95,8 @@ class Pages_ControllerAdmin_Page extends XFCP_Pages_ControllerAdmin_Page
 		
 		$viewParams = array(
 			'page' 				=> $page,
-			'template' 			=> $template,
+			'template'			=> $template,
+			'templates' 		=> $templates,
 			'nodeParentOptions' => $nodeModel->getNodeOptionsArray(
 				$nodeModel->getPossibleParentNodes($page), $page['parent_node_id'], true
 			),
@@ -99,6 +121,10 @@ class Pages_ControllerAdmin_Page extends XFCP_Pages_ControllerAdmin_Page
 			return $this->responseReroute('XenForo_ControllerAdmin_Page', 'deleteConfirm');
 		}
 		
+		$langData 	= $this->_input->filterSingle('language', XenForo_Input::ARRAY_SIMPLE);
+		$templateId = $this->_input->filterSingle('template_id', XenForo_Input::UINT);
+		$nodeId		= $this->_input->filterSingle('node_id', XenForo_Input::UINT);
+		
 		$pageData = $this->_input->filter(array(
 			'node_name' 		=> XenForo_Input::STRING,
 			'node_type_id' 		=> XenForo_Input::BINARY,
@@ -117,71 +143,9 @@ class Pages_ControllerAdmin_Page extends XFCP_Pages_ControllerAdmin_Page
 		{
 			$pageData['style_id'] = 0;
 		}
-
-		$nodeId = $this->_input->filterSingle('node_id', XenForo_Input::UINT);
-
-		$pageData['modified_date'] = XenForo_Application::$time;
 		
-		$phraseDatas 	= array();
-		$options 		= XenForo_Application::get('options');
+		$nodeId = $this->_getPageModel()->saveMultiLingualPage($pageData, $langData, $nodeId, $templateId);
 		
-		$languageModel 	= $this->_getLanguageModel();
-		$languages 		= $languageModel->getAllLanguages();
-		
-		$phraseData = $this->_input->filter(array(
-			'title' 		=> XenForo_Input::ARRAY_SIMPLE,
-			'description' 	=> XenForo_Input::ARRAY_SIMPLE,
-			'content' 		=> XenForo_Input::ARRAY_SIMPLE
-		));
-		
-		foreach ($languages AS $language)
-		{
-			$languageId = $language['language_id'];
-			
-			foreach ($phraseData AS $key => $values)
-			{
-				$phraseDatas[$languageId.$key] = array(
-					'language_id' 	=> $languageId,
-					'title'			=> 'page_' . $key . '_',
-					'phrase_text'	=> $values[$languageId]
-				);
-			}
-			
-			if ($languageId == $options->defaultLanguageId)
-			{
-				$phraseDatas[0]				= $phraseDatas[$languageId.$key];
-				
-				$pageData['title'] 			= $phraseData['title'][$languageId];
-				$pageData['description'] 	= $phraseData['description'][$languageId];
-				
-				$nodeId = $this->_getPageModel()->savePage(
-					$pageData,
-					$this->_input->filterSingle($phraseData['content'][$languageId], XenForo_Input::STRING),
-					$nodeId,
-					$this->_input->filterSingle('template_id', XenForo_Input::UINT)
-				);
-			}
-		}
-		
-		$phraseModel = $this->_getPhraseModel();
-		
-		foreach ($phraseDatas AS $phraseData)
-		{
-			$writer = $this->_getPhraseDataWriter();
-			
-			$phraseData['title'] = $phraseData['title'] . $nodeId;
-			
-			$phrase = $phraseModel->getPhraseInLanguageByTitle($phraseData['title'], $phraseData['language_id']);
-			if ($phrase)
-			{
-				$writer->setExistingData($phrase);
-			}
-			
-			$writer->bulkSet($phraseData);
-			
-			$writer->save();
-		}
-
 		return $this->responseRedirect(
 			XenForo_ControllerResponse_Redirect::SUCCESS,
 			XenForo_Link::buildAdminLink('nodes') . $this->getLastHash($nodeId)
@@ -201,7 +165,7 @@ class Pages_ControllerAdmin_Page extends XFCP_Pages_ControllerAdmin_Page
 	 */
 	protected function _validateField($dataWriterName, array $data = array(), array $options = array(), array $extraData = array())
 	{
-		if (preg_match('/^([a-z0-9-_]*?)\[[a-z0-9_-]\]$/i', $_REQUEST['name'], $match))
+		if (preg_match('/^.*\[([a-z0-9_-]*?)\]$/i', $_REQUEST['name'], $match))
 		{
 			$data['name'] = $match[1];
 		}
