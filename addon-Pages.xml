@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon addon_id="Pages" title="Pages" version_string="0.1 Beta" version_id="1" url="" install_callback_class="" install_callback_method="" uninstall_callback_class="" uninstall_callback_method="">
+<addon addon_id="Pages" title="Pages" version_string="0.2 Beta" version_id="2" url="" install_callback_class="" install_callback_method="" uninstall_callback_class="" uninstall_callback_method="">
   <admin_navigation>
     <navigation navigation_id="pages" parent_navigation_id="applications" display_order="15" link="pages" admin_permission_id="pagesManage" debug_only="0" hide_no_children="0"/>
     <navigation navigation_id="pagesAdd" parent_navigation_id="pages" display_order="10" link="pages/add" admin_permission_id="pagesManage" debug_only="0" hide_no_children="0"/>
@@ -66,21 +66,25 @@
 						</div>
 					</div>
 				
-					<xen:textboxunit name="title[{$_languageId}]" value="{$phrases.title.{$_languageId}.phrase_text}" label="{xen:phrase title}:" data-liveTitleTemplate="{xen:if {$page.node_id},
+					<xen:textboxunit name="language[{$_languageId}][title]" value="{$phrases.title.{$_languageId}.phrase_text}" label="{xen:phrase title}:" data-liveTitleTemplate="{xen:if {$page.node_id},
 						'{xen:phrase edit_page}: <em>%s</em>',
 						'{xen:phrase create_new_page}: <em>%s</em>'}">
 					</xen:textboxunit>
 					
 					<!-- slot: after_title -->
 			
-					<xen:textboxunit name="description[{$_languageId}]" value="{$phrases.description.{$_languageId}.phrase_text}" label="{xen:phrase description}:" hint="{xen:phrase you_may_use_html}" explain="{xen:phrase node_description_explain}" rows="2" inputclass="Elastic">
+					<xen:textboxunit name="language[{$_languageId}][description]" value="{$phrases.description.{$_languageId}.phrase_text}" label="{xen:phrase description}:" hint="{xen:phrase you_may_use_html}" explain="{xen:phrase node_description_explain}" rows="2" inputclass="Elastic">
 					</xen:textboxunit>
 					
 					<!-- slot: after_description -->
 						
-					<textarea name="content[{$_languageId}]" rows="20" class="textCtrl Elastic OptOut pageContentEditor">{$phrases.content.{$_languageId}.phrase_text}</textarea>
+					<textarea name="language[{$_languageId}][template]" rows="20" class="textCtrl Elastic OptOut pageContentEditor">{$templates.{$_languageId}.template}</textarea>
 					
 				</fieldset>
+							
+				<input type="hidden" name="language[{$_languageId}][id][title]" value="{$phrases.title.{$_languageId}.phrase_id}" />
+				<input type="hidden" name="language[{$_languageId}][id][description]" value="{$phrases.description.{$_languageId}.phrase_id}" />
+				<input type="hidden" name="language[{$_languageId}][id][template]" value="{$templates.{$_languageId}.template_id}" />
 					
 			</xen:foreach>
 			
