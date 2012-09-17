@@ -47,5 +47,9 @@ class Pages_Listen
 		/* Extend End */
 	}
 
+	public static function navigation_tabs(array &$extraTabs, $selectedTabId)
+	{
+	}
+
 
 }

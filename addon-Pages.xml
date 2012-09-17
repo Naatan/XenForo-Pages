@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon addon_id="Pages" title="Pages" version_string="0.2 Beta" version_id="2" url="" install_callback_class="" install_callback_method="" uninstall_callback_class="" uninstall_callback_method="">
+<addon addon_id="Pages" title="Pages" version_string="0.2.1 Beta" version_id="3" url="" install_callback_class="" install_callback_method="" uninstall_callback_class="" uninstall_callback_method="">
   <admin_navigation>
     <navigation navigation_id="pages" parent_navigation_id="applications" display_order="15" link="pages" admin_permission_id="pagesManage" debug_only="0" hide_no_children="0"/>
     <navigation navigation_id="pagesAdd" parent_navigation_id="pages" display_order="10" link="pages/add" admin_permission_id="pagesManage" debug_only="0" hide_no_children="0"/>
@@ -202,6 +202,7 @@
     <listener event_id="load_class_controller" execute_order="10" callback_class="Pages_Listen" callback_method="load_class_controller" active="1" description=""/>
     <listener event_id="load_class_model" execute_order="10" callback_class="Pages_Listen" callback_method="load_class_model" active="1" description=""/>
     <listener event_id="load_class_view" execute_order="10" callback_class="Pages_Listen" callback_method="load_class_view" active="1" description=""/>
+    <listener event_id="navigation_tabs" execute_order="10" callback_class="Pages_Listen" callback_method="navigation_tabs" active="1" description=""/>
   </code_event_listeners>
   <cron/>
   <email_templates/>
